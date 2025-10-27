@@ -83,6 +83,12 @@ proxies:
     port: 6969
     username: "@BDiX_BypassX"
     password: "@BDiX_BypassX"
+  - name: "🇧🇩 Server-15"
+    type: socks5
+    server: 122.144.12.155
+    port: 6969
+    username: "@BDiX_BypassX"
+    password: "@BDiX_BypassX"
     
     
 
@@ -110,6 +116,7 @@ proxy-groups:
       - "🇧🇩 Server-12"
       - "🇧🇩 Server-13"
       - "🇧🇩 Server-14"
+      - "🇧🇩 Server-15"
     url: https://www.gstatic.com/generate_204
     interval: 5000
     strategy: round-robin
