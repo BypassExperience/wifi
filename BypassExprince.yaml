@@ -1,0 +1,240 @@
+# ==========================
+# 👉 Join : https://t.me/unique_solution1
+# ==========================
+proxies:
+  # BD SOCKS5 Servers
+  - name: "🇧🇩 Server-1"
+    type: socks5
+    server: 103.91.231.244
+    port: 1088
+    username: test
+    password: test
+  - name: "🇧🇩 Server-2"
+    type: socks5
+    server: 103.140.25.10
+    port: 1088
+    username: test
+    password: test
+  - name: "🇧🇩 Server-3"
+    type: socks5
+    server: 103.197.48.154
+    port: 1088
+    username: test
+    password: test
+  - name: "🇧🇩 Server-4"
+    type: socks5
+    server: 103.166.253.92
+    port: 1088
+    username: test
+    password: test
+  - name: "🇧🇩 Server-5"
+    type: socks5
+    server: 103.122.254.33
+    port: 1088
+    username: test
+    password: test
+  - name: "🇧🇩 Server-6"
+    type: socks5
+    server: 220.247.165.129
+    port: 1088
+    username: test
+    password: test
+  - name: "🇧🇩 Server-7"
+    type: socks5
+    server: 203.76.220.168
+    port: 1052
+    username: exrex
+    password: exrex
+  - name: "🇧🇩 Server-8"
+    type: socks5
+    server: 203.80.190.110
+    port: 1080
+    username: 50mbs
+    password: 50mbs
+  - name: "🇧🇩 Server-9"
+    type: socks5
+    server: 103.143.139.173
+    port: 1080
+    username: 1
+    password: 1
+  - name: "🇧🇩 Server-10"
+    type: socks5
+    server: 103.106.241.235
+    port: 6969
+    username: "@bdiix_bypass"
+    password: "@bdiix_bypass"
+  - name: "🇧🇩 Server-11"
+    type: socks5
+    server: 27.147.177.74
+    port: 1080
+    username: "@bdiix_bypass"
+    password: "@bdiix_bypass"
+  - name: "🇧🇩 Server-12"
+    type: socks5
+    server: 103.137.160.241
+    port: 6969
+    username: "@BDiX_BypassX"
+    password: "@BDiX_BypassX"
+  - name: "🇧🇩 Server-13"
+    type: socks5
+    server: 202.65.171.254
+    port: 1052
+    username: "@bdiix_bypass"
+    password: "@bdiix_bypass"
+  - name: "🇧🇩 Server-14"
+    type: socks5
+    server: 103.85.241.148
+    port: 6969
+    username: "@BDiX_BypassX"
+    password: "@BDiX_BypassX"
+  - name: "🇧🇩 Server-15"
+    type: socks5
+    server: 122.144.12.155
+    port: 6969
+    username: "@BDiX_BypassX"
+    password: "@BDiX_BypassX"
+
+  # VLESS (V2Ray) Servers
+  - name: "🎬 YouTube 1"
+    type: vless
+    server: 152.42.248.223
+    port: 443
+    uuid: cc1cf382-0b0a-4ad7-8f46-4a708dd713ec
+    encryption: none
+    tls: true
+    skip-cert-verify: true
+    sni: upload.youtube.com
+    network: tcp
+    udp: true
+  - name: "🎬 YouTube 2"
+    type: vless
+    server: 152.42.248.223
+    port: 443
+    uuid: cc1cf382-0b0a-4ad7-8f46-4a708dd713ec
+    encryption: none
+    tls: true
+    skip-cert-verify: true
+    sni: upload.youtube.com
+    network: tcp
+    udp: true
+
+  - name: "📘 Facebook 1"
+    type: vless
+    server: 152.42.248.223
+    port: 443
+    uuid: cc1cf382-0b0a-4ad7-8f46-4a708dd713ec
+    encryption: none
+    tls: true
+    skip-cert-verify: true
+    sni: web.facebook.com
+    network: tcp
+    udp: true
+  - name: "📘 Facebook 2"
+    type: vless
+    server: 152.42.248.223
+    port: 443
+    uuid: cc1cf382-0b0a-4ad7-8f46-4a708dd713ec
+    encryption: none
+    tls: true
+    skip-cert-verify: true
+    sni: web.facebook.com
+    network: tcp
+    udp: true
+
+  - name: "⚡ Ryze 1"
+    type: vless
+    server: 152.42.248.223
+    port: 443
+    uuid: cc1cf382-0b0a-4ad7-8f46-4a708dd713ec
+    encryption: none
+    tls: true
+    skip-cert-verify: true
+    sni: user.telegram.com
+    network: tcp
+    udp: true
+  - name: "⚡ Ryze 2"
+    type: vless
+    server: 152.42.248.223
+    port: 443
+    uuid: cc1cf382-0b0a-4ad7-8f46-4a708dd713ec
+    encryption: none
+    tls: true
+    skip-cert-verify: true
+    sni: user.telegram.com
+    network: tcp
+    udp: true
+
+# ==========================
+# GROUPS : https://t.me/uniquestn
+# ==========================
+proxy-groups:
+  - name: "BypassExperience"
+    type: select
+    proxies:
+      - "⚡ WiFi"
+      - "🎬 YouTube"
+      - "📘 Facebook"
+      - "⚡ Ryze"
+
+  - name: "⚡ WiFi"
+    type: load-balance
+    proxies:
+      - "🇧🇩 Server-1"
+      - "🇧🇩 Server-2"
+      - "🇧🇩 Server-3"
+      - "🇧🇩 Server-4"
+      - "🇧🇩 Server-5"
+      - "🇧🇩 Server-6"
+      - "🇧🇩 Server-7"
+      - "🇧🇩 Server-8"
+      - "🇧🇩 Server-9"
+      - "🇧🇩 Server-10"
+      - "🇧🇩 Server-11"
+      - "🇧🇩 Server-12"
+      - "🇧🇩 Server-13"
+      - "🇧🇩 Server-14"
+      - "🇧🇩 Server-15"
+    strategy: round-robin
+    url: https://www.gstatic.com/generate_204
+    interval: 5000
+
+  - name: "🎬 YouTube"
+    type: url-test
+    proxies:
+      - "🎬 YouTube 1"
+      - "🎬 YouTube 2"
+    url: https://www.gstatic.com/generate_204
+    interval: 5000
+    tolerance: 100
+    lazy: true
+
+  - name: "📘 Facebook"
+    type: url-test
+    proxies:
+      - "📘 Facebook 1"
+      - "📘 Facebook 2"
+    url: https://www.gstatic.com/generate_204
+    interval: 5000
+    tolerance: 100
+    lazy: true
+
+  - name: "⚡ Ryze"
+    type: url-test
+    proxies:
+      - "⚡ Ryze 1"
+      - "⚡ Ryze 2"
+    url: https://www.gstatic.com/generate_204
+    interval: 5000
+    tolerance: 100
+    lazy: true
+
+# ==========================
+# Username : @UNIQUE_Solution1
+# ==========================
+rules:
+  - DOMAIN-SUFFIX,youtube.com,🎬 YouTube
+  - DOMAIN-SUFFIX,facebook.com,📘 Facebook
+  - DOMAIN-SUFFIX,.telegram.com,⚡ Ryze
+  - DOMAIN-SUFFIX,google.com,BypassExperience
+  - NETWORK,UDP,DIRECT
+  - MATCH,BypassExperience
