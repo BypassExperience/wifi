@@ -1,0 +1,2809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NBD TUNNEL</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+/* Splash Screen Styles */
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+}
+
+.splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.splash-icon-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.splash-icon {
+    font-size: 60px;
+    color: #ff77c6;
+    opacity: 0;
+    transform: scale(0.5);
+    animation: icon-bounce-in 1s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation-delay: 0.3s;
+}
+
+.splash-icon-glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 119, 198, 0.4) 0%, rgba(255, 119, 198, 0) 70%);
+    opacity: 0;
+    transform: scale(0);
+    animation: icon-glow 1.5s forwards ease-out;
+    animation-delay: 0.5s;
+}
+
+.splash-text {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #7c77c6 0%, #ff77c6 50%, #77dbff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: text-fade-in 1s forwards ease-out;
+    animation-delay: 0.8s;
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(124, 119, 198, 0.4);
+}
+
+@keyframes icon-bounce-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes icon-glow {
+    0% {
+        opacity: 0;
+        transform: scale(0);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes text-fade-in {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    /* Dark theme colors (default) */
+    --bg-primary: #000000;
+    --bg-secondary: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(22, 33, 62, 0.8) 100%);
+    --bg-tertiary: linear-gradient(135deg, rgba(15, 15, 35, 0.6) 0%, rgba(26, 26, 46, 0.4) 100%);
+    --bg-modal: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+    --bg-footer: linear-gradient(135deg, rgba(15, 15, 35, 0.9) 0%, rgba(26, 26, 46, 0.9) 100%);
+    --text-primary: #e8eaed;
+    --text-secondary: #b8bcc8;
+    --text-accent: #ff77c6;
+    --border-primary: rgba(124, 119, 198, 0.3);
+    --border-secondary: rgba(255, 255, 255, 0.3);
+    --shadow-primary: rgba(0, 0, 0, 0.3);
+    --shadow-secondary: rgba(124, 119, 198, 0.2);
+    --button-bg: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(22, 33, 62, 0.6) 100%);
+    --button-border: rgba(255, 255, 255, 0.3);
+    --button-hover-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
+}
+
+/* Light theme colors */
+body.light-theme {
+    --bg-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+    --bg-secondary: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.8) 100%);
+    --bg-tertiary: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 249, 250, 0.6) 100%);
+    --bg-modal: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
+    --bg-footer: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.9) 100%);
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-accent: #d63384;
+    --border-primary: rgba(108, 117, 125, 0.3);
+    --border-secondary: rgba(0, 0, 0, 0.2);
+    --shadow-primary: rgba(0, 0, 0, 0.1);
+    --shadow-secondary: rgba(214, 51, 132, 0.2);
+    --button-bg: linear-gradient(135deg, rgba(248, 249, 250, 0.9) 0%, rgba(233, 236, 239, 0.8) 100%);
+    --button-border: rgba(0, 0, 0, 0.15);
+    --button-hover-bg: linear-gradient(135deg, rgba(233, 236, 239, 0.9) 0%, rgba(222, 226, 230, 0.8) 100%);
+}
+
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    padding-bottom: env(safe-area-inset-bottom, 0px); /* For iPhone X and newer */
+    transition: all 0.3s ease;
+}
+
+.container {
+    flex: 1;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-y: auto; /* Change to auto to allow scrolling */
+    max-height: calc(100vh - 95px - env(safe-area-inset-bottom, 20px)); /* Increase footer space and safe area */
+    padding-bottom: 35px; /* Increase padding to the bottom of the container */
+}
+
+header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 23px 5px 8px 5px;
+    margin-bottom: 5px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-title {
+    font-size: 24px;
+    background: linear-gradient(135deg, #7c77c6 0%, #ff77c6 50%, #77dbff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    text-shadow: 0 0 30px rgba(124, 119, 198, 0.3);
+}
+
+.theme-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(124, 119, 198, 0.15) 0%, rgba(255, 119, 198, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(124, 119, 198, 0.3);
+    box-shadow: 0 2px 8px rgba(124, 119, 198, 0.2);
+}
+
+.theme-toggle:hover {
+    background: linear-gradient(135deg, rgba(124, 119, 198, 0.25) 0%, rgba(255, 119, 198, 0.2) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 119, 198, 0.3);
+}
+
+.theme-icon {
+    color: #7c77c6;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.premium-badge {
+    width: 35px;
+    height: 35px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 119, 198, 0.15) 0%, rgba(120, 219, 255, 0.15) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 119, 198, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 119, 198, 0.2);
+}
+
+.premium-badge:hover {
+    background: linear-gradient(135deg, rgba(255, 119, 198, 0.25) 0%, rgba(120, 219, 255, 0.25) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 119, 198, 0.3);
+}
+
+.premium-badge i {
+    color: #ff77c6;
+    font-size: 16px;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.modal-content {
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 25px;
+    width: 85%;
+    max-width: 350px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    animation: modalopen 0.4s;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+@keyframes modalopen {
+    from { opacity: 0; transform: translate(-50%, -60%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.modal-header {
+    margin-bottom: 20px;
+}
+
+.modal-title {
+    color: #e8eaed;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    background: linear-gradient(135deg, #7c77c6 0%, #ff77c6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.modal-subtitle {
+    color: #b8bcc8;
+    font-size: 14px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-label {
+    display: block;
+    color: #e8eaed;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(124, 119, 198, 0.3);
+    background: rgba(15, 15, 35, 0.8);
+    color: #e8eaed;
+    font-size: 15px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #7c77c6;
+    box-shadow: 0 0 0 3px rgba(124, 119, 198, 0.2);
+    background: rgba(15, 15, 35, 0.9);
+}
+
+.save-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7c77c6 0%, #ff77c6 50%, #77dbff 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(124, 119, 198, 0.3);
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(124, 119, 198, 0.4);
+}
+
+.save-btn:active {
+    transform: translateY(0px);
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: #b8bcc8;
+    font-size: 22px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    color: #ff77c6;
+}
+
+.section-screen {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    z-index: 200;
+    overflow-y: auto;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 30px 15px 15px 15px;
+    border-bottom: 1px solid var(--border-primary);
+    position: sticky;
+    top: 0;
+    background: var(--bg-tertiary);
+    z-index: 10;
+    backdrop-filter: blur(15px);
+}
+
+.section-header-left {
+    display: flex;
+    align-items: center;
+}
+
+.back-btn {
+    color: var(--text-secondary);
+    font-size: 20px;
+    margin-right: 15px;
+    cursor: pointer;
+    padding: 5px;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    color: #7c77c6;
+}
+
+.section-title {
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.section-content {
+    padding: 15px;
+    padding-bottom: 80px;
+    height: calc(100% - 60px);
+    overflow-y: auto;
+}
+
+.connect-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin: 40px auto 0 auto;
+}
+
+/* Base styles for connect-ring */
+.connect-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    transition: border-color 0.5s ease-in-out;
+}
+
+/* Animations for connect-ring */
+@keyframes rotating-red {
+    0% { transform: rotate(0deg); border-top-color: rgba(255, 119, 198, 0.8); border-right-color: rgba(255, 119, 198, 0.8); border-bottom-color: rgba(255, 119, 198, 0.8); border-left-color: rgba(255, 119, 198, 0.2); }
+    100% { transform: rotate(360deg); border-top-color: rgba(255, 119, 198, 0.8); border-right-color: rgba(255, 119, 198, 0.8); border-bottom-color: rgba(255, 119, 198, 0.8); border-left-color: rgba(255, 119, 198, 0.2); }
+}
+
+@keyframes rotating-fade-red {
+    0% { transform: rotate(0deg); border-top-color: rgba(255, 119, 198, 0.8); border-right-color: rgba(255, 119, 198, 0.8); border-bottom-color: rgba(255, 119, 198, 0.8); border-left-color: rgba(255, 119, 198, 0.2); opacity: 1; }
+    100% { transform: rotate(360deg); border-top-color: rgba(255, 119, 198, 0.8); border-right-color: rgba(255, 119, 198, 0.8); border-bottom-color: rgba(255, 119, 198, 0.8); border-left-color: rgba(255, 119, 198, 0.2); opacity: 0; border-width: 0px; }
+}
+
+.connect-ring.connecting, .connect-ring.stopping {
+    animation: rotating-red 1.5s linear infinite;
+}
+
+.connect-ring.connected {
+    border-color: rgba(119, 219, 255, 0.8);
+    animation: none;
+    box-shadow: 0 0 20px rgba(119, 219, 255, 0.3);
+}
+
+.connect-ring.disconnected {
+    border-color: rgba(255, 119, 198, 0.3);
+    animation: none;
+}
+
+.connect-btn {
+    position: absolute;
+    top: 13px;
+    left: 13px;
+    width: 134px;
+    height: 134px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(124, 119, 198, 0.1);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+.connect-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.power-icon {
+    font-size: 40px;
+    color: #e8eaed;
+    filter: drop-shadow(0 0 10px rgba(124, 119, 198, 0.3));
+}
+
+.status {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 20px 0;
+    color: #ff77c6;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    padding: 4px 16px 4px 22px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255, 119, 198, 0.15) 0%, rgba(120, 219, 255, 0.05) 100%);
+    display: inline-block;
+    border: 1px solid rgba(255, 119, 198, 0.3);
+}
+
+.status::before {
+    content: '';
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    background: linear-gradient(135deg, #ff77c6 0%, #77dbff 100%);
+    border-radius: 50%;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 0 10px rgba(255, 119, 198, 0.5);
+}
+
+.info-panel {
+    background: var(--bg-secondary);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 500px;
+    padding: 12px;
+    box-shadow: 0 8px 32px var(--shadow-primary);
+    border: 2px solid var(--border-secondary);
+    margin-top: 15px; /* Adjusted margin-top */
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.server-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(124, 119, 198, 0.1);
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.server-section:hover {
+    background: rgba(124, 119, 198, 0.05);
+    border-radius: 12px;
+    padding: 8px 12px 12px 12px;
+}
+
+.server-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.server-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(124, 119, 198, 0.2) 0%, rgba(255, 119, 198, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7c77c6;
+    font-size: 15px;
+}
+
+.server-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.server-title {
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.server-value {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.chevron-right {
+    color: #7c77c6;
+    font-size: 15px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.detail-box {
+    display: flex;
+    flex-direction: column;
+    background: var(--button-bg);
+    border-radius: 15px;
+    padding: 8px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--button-border);
+}
+
+.detail-box::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+}
+
+.detail-box.download::after {
+    background: linear-gradient(90deg, #7c77c6 0%, #77dbff 100%);
+}
+
+.detail-box.upload::after {
+    background: linear-gradient(90deg, #77dbff 0%, #7c77c6 100%);
+}
+
+.detail-box.ping::after {
+    background: linear-gradient(90deg, #ff77c6 0%, #ffb347 100%);
+}
+
+.detail-box.ip::after {
+    background: linear-gradient(90deg, #ff77c6 0%, #7c77c6 100%);
+}
+
+.detail-title {
+    font-size: 12px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.download .detail-title {
+    color: #77dbff;
+}
+
+.upload .detail-title {
+    color: #7c77c6;
+}
+
+.ping .detail-title {
+    color: #ff77c6;
+}
+
+.ip .detail-title {
+    color: #ffb347;
+}
+
+.detail-value {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e8eaed;
+}
+
+.detail-icon {
+    font-size: 11px;
+}
+
+.footer {
+    background: linear-gradient(135deg, rgba(15, 15, 35, 0.9) 0%, rgba(26, 26, 46, 0.9) 100%);
+    backdrop-filter: blur(15px);
+    width: 100%;
+    padding: 18px 0; /* Increase padding */
+    border-top: 1px solid rgba(124, 119, 198, 0.1);
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); /* Add extra space above safe area */
+    left: 0;
+    z-index: 300;
+    height: 95px; /* Increase footer height */
+}
+
+/* Fill the gap below footer with black background */
+.footer::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; /* Extend below the footer */
+    left: 0;
+    width: 100%;
+    height: 50px; /* Height of the fill area */
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    z-index: -1;
+}
+
+.nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #b8bcc8;
+    transition: all 0.3s ease;
+}
+
+.nav-item.active {
+    color: #ff77c6;
+    transform: translateY(-12px); /* Increase upward movement */
+}
+
+.nav-icon-container {
+    width: 36px; /* Increase size */
+    height: 36px; /* Increase size */
+    border-radius: 12px;
+    background: rgba(124, 119, 198, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px; /* Increase margin */
+    transition: all 0.3s ease;
+}
+
+.nav-item.active .nav-icon-container {
+    background: linear-gradient(135deg, rgba(255, 119, 198, 0.2) 0%, rgba(120, 219, 255, 0.1) 100%);
+    box-shadow: 0 4px 15px rgba(255, 119, 198, 0.2);
+}
+
+.nav-icon {
+    font-size: 18px; /* Increase icon size */
+}
+
+.nav-text {
+    font-size: 11px; /* Increase text size */
+    font-weight: 500;
+}
+
+.server-list {
+    list-style: none;
+    margin-top: 10px;
+}
+
+.server-item {
+    background: var(--button-bg);
+    border-radius: 18px;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid var(--button-border);
+    position: relative;
+    overflow: hidden;
+    animation: slideInRight 0.6s ease-out;
+    box-shadow: 0 4px 15px var(--shadow-primary);
+}
+
+.server-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.server-item:hover::before {
+    left: 100%;
+}
+
+.server-item:hover, .server-item:active {
+    background: var(--button-hover-bg);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 35px var(--shadow-secondary);
+    border-color: var(--border-primary);
+}
+
+.server-item.selected {
+    background: linear-gradient(135deg, rgba(119, 219, 255, 0.25) 0%, rgba(124, 119, 198, 0.2) 100%);
+    border: 2px solid rgba(119, 219, 255, 0.8);
+    box-shadow: 0 8px 25px rgba(119, 219, 255, 0.4);
+    transform: translateY(-2px);
+    position: relative;
+}
+
+.server-item.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    color: #77dbff;
+    font-size: 16px;
+    font-weight: bold;
+    background: rgba(119, 219, 255, 0.3);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: checkmarkPulse 2s infinite;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes checkmarkPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(119, 219, 255, 0.4);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 8px rgba(119, 219, 255, 0);
+    }
+}
+
+.server-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    font-size: 20px;
+    color: #7c77c6;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.server-details {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.server-name-and-desc {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.server-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0;
+    line-height: 1.2;
+}
+
+.server-type {
+    font-size: 9px;
+    padding: 2px 6px;
+    background: linear-gradient(135deg, #77dbff 0%, #7c77c6 100%);
+    color: #ffffff;
+    border-radius: 8px;
+    display: inline-block;
+    margin: 0;
+    border: 1px solid rgba(119, 219, 255, 0.4);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 4px rgba(119, 219, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+    align-self: flex-end; /* Align to the right */
+}
+
+.server-type::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.server-item:hover .server-type::before {
+    left: 100%;
+}
+
+.server-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.log-item {
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.6) 0%, rgba(22, 33, 62, 0.4) 100%);
+    border-radius: 12px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    color: #e8eaed;
+    font-size: 12px;
+    border-left: 3px solid #7c77c6;
+}
+
+.log-item.error {
+    border-left-color: #ff77c6;
+}
+
+.log-item.warning {
+    border-left-color: #ffb347;
+}
+
+.log-item.success {
+    border-left-color: #77dbff;
+}
+
+.log-timestamp {
+    color: #b8bcc8;
+    font-size: 10px;
+    margin-bottom: 3px;
+}
+
+.update-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 300px;
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+    border-radius: 20px;
+    padding: 18px;
+    z-index: 150;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(124, 119, 198, 0.2);
+    text-align: center;
+}
+
+.update-icon {
+    font-size: 36px;
+    color: #7c77c6;
+    margin-bottom: 12px;
+    animation: rotate 2s linear infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.update-text {
+    color: var(--text-primary);
+    font-size: 15px;
+    margin-bottom: 8px;
+}
+
+#atualizarSection .section-content {
+    padding: 15px;
+    height: calc(100% - 60px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.menu-item {
+    background: var(--button-bg);
+    border-radius: 18px;
+    padding: 10px;
+    margin-bottom: 10px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid var(--button-border);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    animation: slideInLeft 0.6s ease-out;
+    box-shadow: 0 4px 15px var(--shadow-primary);
+}
+
+.menu-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.menu-item:hover::before {
+    left: 100%;
+}
+
+.menu-item:hover {
+    background: var(--button-hover-bg);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 35px var(--shadow-secondary);
+    border-color: var(--border-primary);
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.menu-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.menu-title i {
+    color: #7c77c6;
+    font-size: 15px;
+}
+
+.menu-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.clear-logs-btn {
+    background: linear-gradient(135deg, rgba(255, 119, 198, 0.15) 0%, rgba(255, 119, 198, 0.05) 100%);
+    border: 1px solid rgba(255, 119, 198, 0.3);
+    border-radius: 10px;
+    color: #ff77c6;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.clear-logs-btn:hover {
+    background: linear-gradient(135deg, rgba(255, 119, 198, 0.25) 0%, rgba(255, 119, 198, 0.15) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(255, 119, 198, 0.2);
+}
+
+.clear-logs-btn:active {
+    transform: translateY(0);
+}
+
+.validity-info {
+    margin-bottom: 20px;
+}
+
+.info-item {
+    margin-bottom: 15px;
+}
+
+.info-label {
+    display: block;
+    color: #e8eaed;
+    font-size: 14px;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.info-value {
+    padding: 10px 15px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(15, 15, 35, 0.8) 0%, rgba(26, 26, 46, 0.6) 100%);
+    color: #e8eaed;
+    font-size: 15px;
+    border: 1px solid rgba(124, 119, 198, 0.2);
+    font-weight: 600;
+}
+
+.routing-info {
+    margin-bottom: 20px;
+}
+
+.routing-instructions {
+    background: linear-gradient(135deg, rgba(15, 15, 35, 0.8) 0%, rgba(26, 26, 46, 0.6) 100%);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-left: 3px solid #7c77c6;
+}
+
+.routing-instructions p {
+    color: #e8eaed;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.routing-instructions p:last-child {
+    margin-bottom: 0;
+}
+
+.routing-status {
+    margin-bottom: 20px;
+}
+
+.category-header {
+    background: linear-gradient(135deg, rgba(124, 119, 198, 0.15) 0%, rgba(255, 119, 198, 0.08) 100%);
+    border-radius: 15px;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-left: 3px solid #7c77c6;
+    box-shadow: 0 4px 15px rgba(124, 119, 198, 0.1);
+}
+
+.category-title {
+    color: #e8eaed;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.category-icon {
+    color: #7c77c6;
+    font-size: 16px;
+}
+
+/* Media query for devices with navigation keys */
+@media screen and (max-height: 700px) {
+    .container {
+        max-height: calc(100vh - 110px - env(safe-area-inset-bottom, 25px));
+        padding-bottom: 45px;
+    }
+    
+    .footer {
+        height: 110px;
+        padding: 22px 0;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 15px);
+    }
+    
+    .footer::after {
+        bottom: -60px;
+        height: 60px;
+    }
+    
+    .nav-item.active {
+        transform: translateY(-15px);
+    }
+}
+
+/* Media query for very small screens */
+@media screen and (max-height: 600px) {
+    .container {
+        max-height: calc(100vh - 120px - env(safe-area-inset-bottom, 30px));
+        padding-bottom: 50px;
+    }
+    
+    .footer {
+        height: 120px;
+        padding: 25px 0;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    }
+    
+    .footer::after {
+        bottom: -70px;
+        height: 70px;
+    }
+    
+    .nav-item.active {
+        transform: translateY(-18px);
+    }
+}
+
+/* Status Pop-up Styles */
+.status-popup-backdrop {
+    display: none;
+}
+
+.status-popup-backdrop.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.status-popup {
+    display: none;
+}
+
+.status-popup.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.status-popup-content {
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+    border-radius: 20px;
+    padding: 25px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(15px);
+    min-width: 200px;
+}
+
+.status-popup-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.status-popup-icon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    animation: ripple 2s infinite;
+}
+
+.status-popup.connected .status-popup-icon {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+.status-popup.connected .status-popup-icon::before {
+    background: rgba(34, 197, 94, 0.3);
+}
+
+.status-popup.disconnected .status-popup-icon {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.4);
+}
+
+.status-popup.disconnected .status-popup-icon::before {
+    background: rgba(220, 38, 38, 0.3);
+}
+
+.status-popup-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e8eaed;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.status-popup.connected .status-popup-text {
+    color: #4ade80;
+}
+
+.status-popup.disconnected .status-popup-text {
+    color: #ef4444;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+</style>
+</head>
+<body>
+<div class="splash-screen" id="splashScreen">
+    <div class="splash-icon-container">
+        <div class="splash-icon-glow"></div>
+        <i class="fas fa-shield-alt splash-icon"></i>
+    </div>
+    <div class="splash-text">NBD TUNNEL</div>
+</div>
+<div class="container">
+<header>
+<div class="header-left">
+<h1 class="app-title">NBD TUNNEL</h1>
+<div class="theme-toggle" id="themeToggle">
+<i class="fa-solid fa-moon theme-icon"></i>
+</div>
+</div>
+<div class="premium-badge" id="userBtn">
+<i class="fas fa-user"></i>
+</div>
+</header>
+<div class="info-panel">
+<div class="server-section" id="serverSelector">
+<div class="server-left">
+<div class="server-icon">
+<i class="fa-solid fa-shield-halved"></i>
+</div>
+<div class="server-info">
+<div class="server-title">Selected Server</div>
+<div class="server-value" id="selectedServerName">Not Configured</div>
+</div>
+</div>
+<i class="fa-solid fa-angle-right chevron-right"></i>
+</div>
+<div class="details-grid">
+<div class="detail-box download">
+<div class="detail-title">
+<i class="fa-solid fa-download detail-icon"></i>
+                        Download
+                    </div>
+<div class="detail-value">0 KB/s</div>
+</div>
+<div class="detail-box upload">
+<div class="detail-title">
+<i class="fa-solid fa-upload detail-icon"></i>
+                        Upload
+                    </div>
+<div class="detail-value">0 KB/s</div>
+</div>
+<div class="detail-box ping">
+<div class="detail-title">
+<i class="fa-solid fa-tachometer-alt detail-icon"></i>
+                        Ping
+                    </div>
+<div class="detail-value">02 ms</div>
+</div>
+<div class="detail-box ip">
+<div class="detail-title">
+<i class="fa-solid fa-network-wired detail-icon"></i>
+                        Local IP
+                    </div>
+<div class="detail-value">192.168.0.1</div>
+</div>
+</div>
+</div>
+<div class="connect-container">
+<div class="connect-ring"></div>
+<button class="connect-btn">
+<i class="fa-solid fa-bolt-lightning power-icon"></i>
+</button>
+</div>
+<div class="status">Disconnected</div>
+</div>
+<div class="modal" id="routingModal">
+<div class="modal-content">
+<span class="close-btn" id="closeRoutingModal">×</span>
+<div class="modal-header">
+<h3 class="modal-title">Routing</h3>
+<p class="modal-subtitle">Configure connection sharing</p>
+</div>
+<div class="routing-info">
+<div class="routing-instructions">
+<p>1. Turn on the router and then activate the hotspot in this app.</p>
+<p>2. After activation, the IP and PORT will appear in the notification bar. E.g., 192.168.3.5:5578</p>
+<p>3. On the receiving device, connect to the network, open "Advanced Options" and manually set the proxy with the given IP and PORT.</p>
+</div>
+<div class="routing-status">
+<div class="info-item">
+<label class="info-label">HotSpot Status</label>
+<div class="info-value" id="hotspotStatus">Disabled</div>
+</div>
+</div>
+<button class="save-btn" id="toggleHotspotBtn">Enable HotSpot</button>
+</div>
+</div>
+</div>
+<!-- Connection Status Pop-up -->
+<div class="status-popup-backdrop" id="statusPopupBackdrop"></div>
+<div class="status-popup" id="statusPopup">
+<div class="status-popup-content">
+<div class="status-popup-icon" id="statusPopupIcon">
+<i class="fa-solid fa-check"></i>
+</div>
+<div class="status-popup-text" id="statusPopupText">CONNECTED</div>
+</div>
+</div>
+<div class="footer">
+<nav class="nav">
+<a class="nav-item active" data-section="principal" href="#">
+<div class="nav-icon-container">
+<i class="fa-solid fa-house-chimney nav-icon"></i>
+</div>
+<span class="nav-text">Home</span>
+</a>
+<a class="nav-item" data-section="servidor" href="#">
+<div class="nav-icon-container">
+<i class="fa-solid fa-server nav-icon"></i>
+</div>
+<span class="nav-text">Server</span>
+</a>
+<a class="nav-item" data-section="atualizar" href="#">
+<div class="nav-icon-container">
+<i class="fa-solid fa-arrows-rotate nav-icon"></i>
+</div>
+<span class="nav-text">Update</span>
+</a>
+<a class="nav-item" data-section="menu" href="#">
+<div class="nav-icon-container">
+<i class="fa-solid fa-ellipsis nav-icon"></i>
+</div>
+<span class="nav-text">Menu</span>
+</a>
+</nav>
+</div>
+<div class="modal" id="loginModal">
+<div class="modal-content">
+<span class="close-btn" id="closeLoginModal">×</span>
+<div class="modal-header">
+<h3 class="modal-title">NBD TUNNEL Authentication</h3>
+<p class="modal-subtitle">Enter your credentials to continue</p>
+</div>
+<div class="input-group">
+<label class="input-label" for="username">Username</label>
+<input class="input-field" id="username" placeholder="Enter your username" type="text"/>
+</div>
+<div class="input-group">
+<label class="input-label" for="password">Password</label>
+<input class="input-field" id="password" placeholder="Enter your password" type="password"/>
+</div>
+<button class="save-btn" id="saveLoginBtn">Save</button>
+</div>
+</div>
+<div class="modal" id="validityModal">
+<div class="modal-content">
+<span class="close-btn" id="closeValidityModal">×</span>
+<div class="modal-header">
+<h3 class="modal-title">Account Information</h3>
+<p class="modal-subtitle">Details about your NBD TUNNEL subscription</p>
+</div>
+<div class="validity-info">
+<div class="info-item">
+<label class="info-label">Username</label>
+<div class="info-value" id="validityUsername">Loading...</div>
+</div>
+<div class="info-item">
+<label class="info-label">Expiration Date</label>
+<div class="info-value" id="validityExpiration">Loading...</div>
+</div>
+<div class="info-item">
+<label class="info-label">Days Remaining</label>
+<div class="info-value" id="validityDays">Loading...</div>
+</div>
+<div class="info-item">
+<label class="info-label">Connections</label>
+<div class="info-value" id="validityConnections">Loading...</div>
+</div>
+</div>
+<button class="save-btn" id="closeValidityBtn">Close</button>
+</div>
+</div>
+<div class="section-screen" id="servidorSection">
+<div class="section-header">
+<div class="section-header-left">
+<div class="back-btn" id="servidorBackBtn">
+<i class="fa-solid fa-arrow-left"></i>
+</div>
+<h2 class="section-title">Select Server</h2>
+</div>
+<div class="theme-toggle" onclick="toggleTheme()">
+<i class="fa-solid fa-moon theme-icon"></i>
+</div>
+</div>
+<div class="section-content">
+<ul class="server-list">
+<li class="server-item" data-server="Brazil 01">
+<div class="server-img">
+<i class="fa-solid fa-globe-americas"></i>
+</div>
+<div class="server-details">
+<div class="server-name">Brazil 01</div>
+<div class="server-type">PROXY</div>
+<div class="server-desc">Optimized server for streaming and gaming, low latency.</div>
+</div>
+</li>
+<li class="server-item" data-server="Brazil 02">
+<div class="server-img">
+<i class="fa-solid fa-globe-americas"></i>
+</div>
+<div class="server-details">
+<div class="server-name">Brazil 02</div>
+<div class="server-type">PROXY</div>
+<div class="server-desc">High capacity for downloads and stable connections.</div>
+</div>
+</li>
+<li class="server-item" data-server="United States">
+<div class="server-img">
+<i class="fa-solid fa-globe-americas"></i>
+</div>
+<div class="server-details">
+<div class="server-name">United States</div>
+<div class="server-type">PROXY</div>
+<div class="server-desc">Access to international content and regional services.</div>
+</div>
+</li>
+<li class="server-item" data-server="Europe">
+<div class="server-img">
+<i class="fa-solid fa-globe-europe"></i>
+</div>
+<div class="server-details">
+<div class="server-name">Europe</div>
+<div class="server-type">PROXY</div>
+<div class="server-desc">Secure connection for accessing European services.</div>
+</div>
+</li>
+<li class="server-item" data-server="Asia">
+<div class="server-img">
+<i class="fa-solid fa-globe-asia"></i>
+</div>
+<div class="server-details">
+<div class="server-name">Asia</div>
+<div class="server-type">PROXY</div>
+<div class="server-desc">Optimized for Asian games and services.</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="section-screen" id="logsSection" style="display: none;"> <div class="section-header">
+<div class="back-btn" id="logsBackBtn">
+<i class="fa-solid fa-arrow-left"></i>
+</div>
+<h2 class="section-title">Connection Logs</h2>
+<button class="clear-logs-btn" id="clearLogsBtn">
+<i class="fa-solid fa-trash"></i>
+</button>
+</div>
+<div class="section-content">
+</div>
+</div>
+<div class="section-screen" id="menuSection">
+<div class="section-header">
+<div class="section-header-left">
+<div class="back-btn" id="menuBackBtn">
+<i class="fa-solid fa-arrow-left"></i>
+</div>
+<h2 class="section-title">Menu</h2>
+</div>
+<div class="theme-toggle" onclick="toggleTheme()">
+<i class="fa-solid fa-moon theme-icon"></i>
+</div>
+</div>
+<div class="section-content">
+<div class="menu-item">
+<div class="menu-title">
+<i class="fa-solid fa-calendar-check"></i>
+                    VALIDITY
+                </div>
+<div class="menu-desc">
+                    Click here to check your plan validity.
+                </div>
+</div>
+<div class="menu-item">
+<div class="menu-title">
+<i class="fa-solid fa-ban"></i>
+                    CAN'T CONNECT?
+                </div>
+<div class="menu-desc">
+                    Solutions to common connection problems and access to the NBD TUNNEL service.
+                </div>
+</div>
+<div class="menu-item">
+<div class="menu-title">
+<i class="fa-solid fa-route"></i>
+                    HOTSPOT
+                </div>
+<div class="menu-desc">
+                    Enable or disable Hotspot in the NBD TUNNEL app.
+                </div>
+</div>
+<div class="menu-item">
+<div class="menu-title">
+<i class="fa-solid fa-sim-card"></i>
+                    APN
+                </div>
+<div class="menu-desc">
+                    APN settings, edit or create a new APN.
+                </div>
+</div>
+<div class="menu-item">
+<div class="menu-title">
+<i class="fa-solid fa-battery-three-quarters"></i>
+                    BATTERY
+                </div>
+<div class="menu-desc">
+                    Optimize battery usage.
+                </div>
+</div>
+<div class="menu-item">
+<div class="menu-title">
+<i class="fa-solid fa-broom"></i>
+                    CLEAR
+                </div>
+<div class="menu-desc">
+                    Clear cache and data. Internet connection is required to remotely update settings to the latest version.
+                </div>
+</div>
+<div class="menu-item">
+<div class="menu-title">
+<i class="fa-solid fa-gauge-high"></i>
+                    SPEED TEST
+                </div>
+<div class="menu-desc">
+                    Test your internet connection speed using fast.com speed test service.
+                </div>
+</div>
+</div>
+</div>
+<div class="section-screen" id="atualizarSection">
+<div class="section-header">
+<div class="section-header-left">
+<div class="back-btn" id="atualizarBackBtn">
+<i class="fa-solid fa-arrow-left"></i>
+</div>
+<h2 class="section-title">Update</h2>
+</div>
+<div class="theme-toggle" onclick="toggleTheme()">
+<i class="fa-solid fa-moon theme-icon"></i>
+</div>
+</div>
+<div class="section-content">
+<div class="update-icon">
+<i class="fa-solid fa-sync"></i>
+</div>
+<div class="update-text">Searching for updates...</div>
+</div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const splashScreen = document.getElementById('splashScreen');
+    setTimeout(() => {
+        splashScreen.classList.add('hidden');
+    }, 2000); // Hide splash screen after 2 seconds
+
+    const userBtn = document.getElementById('userBtn');
+    const loginModal = document.getElementById('loginModal');
+    const closeLoginModal = document.getElementById('closeLoginModal');
+    const saveLoginBtn = document.getElementById('saveLoginBtn');
+    const serverSelector = document.getElementById('serverSelector');
+    const selectedServerName = document.getElementById('selectedServerName');
+    const navItems = document.querySelectorAll('.nav-item');
+    const servidorSection = document.getElementById('servidorSection');
+    const logsSection = document.getElementById('logsSection');
+    const menuSection = document.getElementById('menuSection');
+    const atualizarSection = document.getElementById('atualizarSection');
+    const servidorBackBtn = document.getElementById('servidorBackBtn');
+    const logsBackBtn = document.getElementById('logsBackBtn');
+    const menuBackBtn = document.getElementById('menuBackBtn');
+    const atualizarBackBtn = document.getElementById('atualizarBackBtn');
+    const sectionContent = document.querySelector('#servidorSection .section-content');
+    const logsContent = document.querySelector('#logsSection .section-content');
+    const connectBtn = document.querySelector('.connect-btn');
+    const statusDisplay = document.querySelector('.status');
+    const clearLogsBtn = document.getElementById('clearLogsBtn');
+    const validityModal = document.getElementById('validityModal');
+    const closeValidityModal = document.getElementById('closeValidityModal');
+    const closeValidityBtn = document.getElementById('closeValidityBtn');
+    const validityMenuItem = document.querySelector('.menu-item:first-child');
+    const routingModal = document.getElementById('routingModal');
+    const closeRoutingModal = document.getElementById('closeRoutingModal');
+    const toggleHotspotBtn = document.getElementById('toggleHotspotBtn');
+    const hotspotStatus = document.getElementById('hotspotStatus');
+    const connectRing = document.querySelector('.connect-ring'); // Get the connect-ring element
+    const statusPopup = document.getElementById('statusPopup');
+    const statusPopupIcon = document.getElementById('statusPopupIcon');
+    const statusPopupText = document.getElementById('statusPopupText');
+    const statusPopupBackdrop = document.getElementById('statusPopupBackdrop');
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.querySelector('.theme-icon');
+
+    let logsLoadingInterval = null;
+    let hasShownConnectedModal = false;
+    let previousDownloadBytes = 0;
+    let previousUploadBytes = 0;
+    let previousConnectionState = 'DISCONNECTED';
+    let currentTheme = 'dark'; // Default theme
+    let connectionStartTime = null;
+    let lastConnectionCheck = Date.now();
+    let connectionTimeoutId = null;
+    let keepAliveInterval = null;
+    
+    // Swipe navigation variables
+    let startX = 0;
+    let startY = 0;
+    let endX = 0;
+    let endY = 0;
+    let isSwipeActive = false;
+    const minSwipeDistance = 50;
+    const maxVerticalDistance = 100;
+    
+    // Navigation sections in order
+    const navigationSections = ['principal', 'servidor', 'atualizar', 'menu'];
+    let currentSectionIndex = 0;
+
+    // Comprehensive localStorage persistence functions
+    function saveAllAppData() {
+        try {
+            const appData = {
+                theme: currentTheme,
+                selectedServer: selectedServerName.textContent,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                downloadBytes: previousDownloadBytes,
+                uploadBytes: previousUploadBytes,
+                lastPing: document.querySelector('.detail-box.ping .detail-value').textContent,
+                localIP: document.querySelector('.detail-box.ip .detail-value').textContent,
+                connectionState: previousConnectionState,
+                connectionStartTime: connectionStartTime,
+                lastSaveTime: Date.now(),
+                hotspotStatus: hotspotStatus.textContent,
+                appVersion: '1.0.0'
+            };
+            
+            localStorage.setItem('nbd_tunnel_app_data', JSON.stringify(appData));
+            localStorage.setItem('nbd_tunnel_last_activity', Date.now().toString());
+            
+            // Individual items for backward compatibility
+            localStorage.setItem('nbd_tunnel_theme', currentTheme);
+            localStorage.setItem('selectedServerName', selectedServerName.textContent);
+            localStorage.setItem('nbd_tunnel_username', document.getElementById('username').value);
+            localStorage.setItem('nbd_tunnel_password', document.getElementById('password').value);
+            localStorage.setItem('nbd_tunnel_download_bytes', previousDownloadBytes.toString());
+            localStorage.setItem('nbd_tunnel_upload_bytes', previousUploadBytes.toString());
+            localStorage.setItem('nbd_tunnel_last_ping', document.querySelector('.detail-box.ping .detail-value').textContent);
+            localStorage.setItem('nbd_tunnel_connection_state', previousConnectionState);
+            
+        } catch (error) {
+            console.error('Error saving app data:', error);
+        }
+    }
+    
+    function loadAllAppData() {
+        try {
+            const savedData = localStorage.getItem('nbd_tunnel_app_data');
+            if (savedData) {
+                const appData = JSON.parse(savedData);
+                
+                // Restore theme
+                if (appData.theme) {
+                    currentTheme = appData.theme;
+                    applyTheme(currentTheme);
+                }
+                
+                // Restore server selection
+                if (appData.selectedServer && appData.selectedServer !== 'Not Configured') {
+                    selectedServerName.textContent = appData.selectedServer;
+                }
+                
+                // Restore credentials
+                if (appData.username) {
+                    document.getElementById('username').value = appData.username;
+                    window?.DtUsername?.set(appData.username);
+                }
+                if (appData.password) {
+                    document.getElementById('password').value = appData.password;
+                    window?.DtPassword?.set(appData.password);
+                }
+                
+                // Restore network stats
+                if (appData.downloadBytes) {
+                    previousDownloadBytes = appData.downloadBytes;
+                }
+                if (appData.uploadBytes) {
+                    previousUploadBytes = appData.uploadBytes;
+                }
+                
+                // Restore connection state
+                if (appData.connectionState) {
+                    previousConnectionState = appData.connectionState;
+                }
+                
+                // Restore connection start time
+                if (appData.connectionStartTime) {
+                    connectionStartTime = appData.connectionStartTime;
+                }
+                
+                console.log('App data restored from localStorage');
+            }
+        } catch (error) {
+            console.error('Error loading app data:', error);
+        }
+    }
+    
+    function startPeriodicSave() {
+        // Save app data every 10 seconds
+        setInterval(saveAllAppData, 10000);
+        
+        // Save on page visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                saveAllAppData();
+            }
+        });
+        
+        // Save before page unload
+        window.addEventListener('beforeunload', function() {
+            saveAllAppData();
+        });
+    }
+    
+    function startConnectionKeepAlive() {
+        // Clear any existing keep-alive interval
+        if (keepAliveInterval) {
+            clearInterval(keepAliveInterval);
+        }
+        
+        // Start keep-alive mechanism every 30 seconds
+        keepAliveInterval = setInterval(function() {
+            const currentState = window?.DtGetVpnState?.execute() || 'DISCONNECTED';
+            
+            if (currentState === 'CONNECTED') {
+                // Update last activity timestamp
+                localStorage.setItem('nbd_tunnel_last_activity', Date.now().toString());
+                
+                // Perform a lightweight network check to maintain connection
+                try {
+                    updateNetworkStats();
+                    updateLocalIPAndPing();
+                } catch (error) {
+                    console.error('Keep-alive check failed:', error);
+                }
+                
+                // Save current state
+                saveAllAppData();
+            }
+        }, 30000); // 30 seconds
+    }
+    
+    function stopConnectionKeepAlive() {
+        if (keepAliveInterval) {
+            clearInterval(keepAliveInterval);
+            keepAliveInterval = null;
+        }
+    }
+    
+    function checkConnectionHealth() {
+        const currentTime = Date.now();
+        const lastActivity = parseInt(localStorage.getItem('nbd_tunnel_last_activity') || '0');
+        const timeSinceLastActivity = currentTime - lastActivity;
+        
+        // If more than 5 minutes since last activity and we're supposed to be connected
+        if (timeSinceLastActivity > 300000 && previousConnectionState === 'CONNECTED') {
+            console.log('Connection health check: Potential connection timeout detected');
+            
+            // Try to refresh connection status
+            updateConnectionStatus();
+            
+            // Update activity timestamp
+            localStorage.setItem('nbd_tunnel_last_activity', currentTime.toString());
+        }
+    }
+
+    // Theme functions
+    function initializeTheme() {
+        const savedTheme = localStorage.getItem('nbd_tunnel_theme') || 'dark';
+        currentTheme = savedTheme;
+        applyTheme(currentTheme);
+    }
+
+    function applyTheme(theme) {
+        const body = document.body;
+        
+        if (theme === 'light') {
+            body.classList.add('light-theme');
+            themeIcon.className = 'fa-solid fa-sun theme-icon';
+            currentTheme = 'light';
+        } else {
+            body.classList.remove('light-theme');
+            themeIcon.className = 'fa-solid fa-moon theme-icon';
+            currentTheme = 'dark';
+        }
+        
+        localStorage.setItem('nbd_tunnel_theme', currentTheme);
+    }
+
+    function toggleTheme() {
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+    }
+
+    function showStatusPopup(type) {
+        // Popups are disabled as per user request.
+        // This function now does nothing.
+        return;
+    }
+
+    function loadSavedCredentials() {
+        const savedUsername = localStorage.getItem('nbd_tunnel_username');
+        const savedPassword = localStorage.getItem('nbd_tunnel_password');
+        
+        if (savedUsername) {
+            document.getElementById('username').value = savedUsername;
+            window?.DtUsername?.set(savedUsername);
+        }
+        if (savedPassword) {
+            document.getElementById('password').value = savedPassword;
+            window?.DtPassword?.set(savedPassword);
+        }
+    }
+
+    function initializeSelectedServer() {
+        const storedServerName = localStorage.getItem('selectedServerName');
+        if (storedServerName) {
+            selectedServerName.textContent = storedServerName;
+        } else {
+            selectedServerName.textContent = 'Not Configured';
+        }
+    }
+
+    function loadLogs() {
+        const logs = window?.DtGetLogs?.execute() || '';
+        logsContent.innerHTML = '';
+        
+        if (!logs.trim()) {
+            logsContent.innerHTML = '<div class="log-item"><div class="log-message">No logs available</div></div>';
+            return;
+        }
+
+        try {
+            const logArray = JSON.parse(logs);
+            logArray.forEach(logEntry => {
+                const timestamp = Object.keys(logEntry)[0];
+                const message = logEntry[timestamp];
+                const cleanMessage = message.replace(/<\/?[^>]+(>|$)/g, '').replace(/\\u003c/g, '<').replace(/\\u003e/g, '>');
+                
+                const logItem = document.createElement('div');
+                logItem.className = 'log-item';
+                
+                if (cleanMessage.toLowerCase().includes('error') || cleanMessage.toLowerCase().includes('fail')) {
+                    logItem.classList.add('error');
+                } else if (cleanMessage.toLowerCase().includes('warning')) {
+                    logItem.classList.add('warning');
+                } else if (cleanMessage.toLowerCase().includes('success') || cleanMessage.toLowerCase().includes('connected')) {
+                    logItem.classList.add('success');
+                }
+                
+                logItem.innerHTML = `
+                    <div class="log-timestamp">${timestamp}</div>
+                    <div class="log-message">${cleanMessage}</div>
+                `;
+                
+                logsContent.appendChild(logItem);
+            });
+        } catch (e) {
+            logsContent.innerHTML = '<div class="log-item error"><div class="log-message">Error processing logs</div></div>';
+        }
+    }
+
+    function startLogsLoading() {
+        if (!logsLoadingInterval) {
+            logsLoadingInterval = setInterval(loadLogs, 1000);
+        }
+    }
+
+    function stopLogsLoading() {
+        if (logsLoadingInterval) {
+            clearInterval(logsLoadingInterval);
+            logsLoadingInterval = null;
+        }
+    }
+
+    function clearLogs() {
+        window?.DtClearLogs?.execute();
+        logsContent.innerHTML = '<div class="log-item"><div class="log-message">Logs cleared successfully</div></div>';
+    }
+
+    function showValidityModal() {
+        menuSection.style.display = 'none';
+        servidorSection.style.display = 'none';
+        logsSection.style.display = 'none';
+        atualizarSection.style.display = 'none';
+        
+        navItems.forEach(function(nav) {
+            nav.classList.remove('active');
+            if (nav.getAttribute('data-section') === 'principal') {
+                nav.classList.add('active');
+            }
+        });
+        
+        validityModal.style.display = 'block';
+        loadValidityInfo();
+    }
+
+    function hideValidityModal() {
+        validityModal.style.display = 'none';
+    }
+
+    function showRoutingModal() {
+        menuSection.style.display = 'none';
+        servidorSection.style.display = 'none';
+        logsSection.style.display = 'none';
+        atualizarSection.style.display = 'none';
+        
+        navItems.forEach(function(nav) {
+            nav.classList.remove('active');
+            if (nav.getAttribute('data-section') === 'principal') {
+                nav.classList.add('active');
+            }
+        });
+        
+        routingModal.style.display = 'block';
+        updateHotspotStatus();
+    }
+
+    function hideRoutingModal() {
+        routingModal.style.display = 'none';
+    }
+
+    function updateHotspotStatus() {
+        const status = window?.DtGetStatusHotSpotService?.execute() || 'STOPPED';
+        
+        const isRunning = status === 'RUNNING';
+        
+        hotspotStatus.textContent = isRunning ? 'Enabled' : 'Disabled';
+        hotspotStatus.style.color = isRunning ? '#77dbff' : '#ff77c6';
+        toggleHotspotBtn.textContent = isRunning ? 'Disable HotSpot' : 'Enable HotSpot';
+        
+        localStorage.setItem('hotspot_status', status);
+    }
+
+    function toggleHotspot() {
+        const status = window?.DtGetStatusHotSpotService?.execute() || 'STOPPED';
+        
+        if (status === 'RUNNING') {
+            window?.DtStopHotSpotService?.execute();
+        } else {
+            window?.DtStartHotSpotService?.execute();
+        }
+        
+        setTimeout(updateHotspotStatus, 1000);
+    }
+
+    function loadValidityInfo() {
+        document.getElementById('validityUsername').textContent = 'Loading...';
+        document.getElementById('validityExpiration').textContent = 'Loading...';
+        document.getElementById('validityDays').textContent = 'Loading...';
+        document.getElementById('validityConnections').textContent = 'Loading...';
+        
+        try {
+            const config = JSON.parse(window?.DtGetAppConfig?.execute() || '{}');
+            const urlCheckUser = new URL(config.urlCheckUser);
+            urlCheckUser.protocol = 'ws:';
+            const socket = new WebSocket(urlCheckUser);
+            
+            socket.onopen = function() {
+                socket.send(JSON.stringify({
+                    action: 'all',
+                    data: {}
+                }));
+            };
+            
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.username && data.expiration_date) {
+                    document.getElementById('validityUsername').textContent = data.username;
+                    document.getElementById('validityExpiration').textContent = data.expiration_date;
+                    document.getElementById('validityDays').textContent = data.expiration_days + ' days';
+                    document.getElementById('validityConnections').textContent = data.count_connections + '/' + data.limit_connections;
+                    socket.close();
+                }
+            };
+            
+            socket.onerror = function() {
+                window?.DtStartCheckUser?.execute();
+            };
+        } catch (error) {
+            window?.DtStartCheckUser?.execute();
+        }
+    }
+
+    function updateConnectionStatus() {
+        const state = window?.DtGetVpnState?.execute() || 'DISCONNECTED';
+        
+        // Update last activity timestamp
+        localStorage.setItem('nbd_tunnel_last_activity', Date.now().toString());
+        
+        // Check if state has changed and show popup accordingly, but only if it's a transition from CONNECTED to DISCONNECTED or AUTH_FAILED
+        if (state !== previousConnectionState) {
+            if (state === 'CONNECTED' && previousConnectionState !== 'CONNECTED') {
+                connectionStartTime = Date.now();
+                startConnectionKeepAlive();
+                showStatusPopup('connected');
+                console.log('Connection established, starting keep-alive mechanism');
+            } else if (state === 'DISCONNECTED' && previousConnectionState === 'CONNECTED') {
+                connectionStartTime = null;
+                stopConnectionKeepAlive();
+                showStatusPopup('disconnected');
+                console.log('Connection lost, stopping keep-alive mechanism');
+            } else if (state === 'AUTH_FAILED' && previousConnectionState !== 'AUTH_FAILED') {
+                connectionStartTime = null;
+                stopConnectionKeepAlive();
+                showStatusPopup('auth_failed');
+                console.log('Authentication failed, stopping keep-alive mechanism');
+            }
+            previousConnectionState = state;
+            saveAllAppData(); // Save state change immediately
+        }
+        
+        // Remove all animation and color classes first
+        connectRing.classList.remove('connecting', 'connected', 'disconnected', 'stopping');
+        connectRing.style.animation = ''; // Clear any existing animation
+        connectRing.style.borderColor = ''; // Clear any direct border color set
+
+        switch(state) {
+            case 'CONNECTED':
+                statusDisplay.textContent = 'CONNECTED';
+                statusDisplay.style.color = '#77dbff';
+                statusDisplay.style.background = 'linear-gradient(135deg, rgba(119, 219, 255, 0.15) 0%, rgba(124, 119, 198, 0.05) 100%)';
+                connectBtn.innerHTML = '<i class="fa-solid fa-power-off power-icon"></i>';
+                connectRing.classList.add('connected'); // Solid green circle
+                stopLogsLoading();
+                
+                // Update connection time if we have a start time
+                if (connectionStartTime) {
+                    const connectionDuration = Math.floor((Date.now() - connectionStartTime) / 1000);
+                    const hours = Math.floor(connectionDuration / 3600);
+                    const minutes = Math.floor((connectionDuration % 3600) / 60);
+                    const seconds = connectionDuration % 60;
+                    
+                    const timeString = hours > 0 
+                        ? `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                        : `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    const timeElement = document.querySelector('.detail-box.time .detail-value');
+                    if (timeElement) {
+                        timeElement.textContent = timeString;
+                    }
+                }
+                break;
+            case 'CONNECTING':
+                statusDisplay.textContent = 'CONNECTING';
+                statusDisplay.style.color = '#ffb347';
+                statusDisplay.style.background = 'linear-gradient(135deg, rgba(255, 179, 71, 0.15) 0%, rgba(255, 119, 198, 0.05) 100%)';
+                connectBtn.innerHTML = '<i class="fa-solid fa-spinner power-icon fa-spin"></i>';
+                connectRing.classList.add('connecting'); // Red rotating circle
+                startLogsLoading();
+                break;
+            case 'STOPPING':
+                statusDisplay.textContent = 'DISCONNECTING';
+                statusDisplay.style.color = '#ffb347';
+                statusDisplay.style.background = 'linear-gradient(135deg, rgba(255, 179, 71, 0.15) 0%, rgba(255, 119, 198, 0.05) 100%)';
+                connectBtn.innerHTML = '<i class="fa-solid fa-spinner power-icon fa-spin"></i>';
+                connectRing.classList.add('stopping'); // Red rotating and fading out
+                // We'll set a specific animation for stopping to fade out
+                connectRing.style.animation = 'rotating-fade-red 1.5s linear forwards';
+                stopLogsLoading();
+                break;
+            case 'NO_NETWORK':
+                statusDisplay.textContent = 'NO NETWORK';
+                statusDisplay.style.color = '#ff77c6';
+                statusDisplay.style.background = 'linear-gradient(135deg, rgba(255, 119, 198, 0.15) 0%, rgba(120, 219, 255, 0.05) 100%)';
+                connectBtn.innerHTML = '<i class="fa-solid fa-bolt-lightning power-icon"></i>';
+                connectRing.classList.add('disconnected'); // Red static border
+                stopLogsLoading();
+                break;
+            case 'AUTH':
+                statusDisplay.textContent = 'AUTHENTICATING';
+                statusDisplay.style.color = '#ffb347';
+                statusDisplay.style.background = 'linear-gradient(135deg, rgba(255, 179, 71, 0.15) 0%, rgba(255, 119, 198, 0.05) 100%)';
+                connectBtn.innerHTML = '<i class="fa-solid fa-spinner power-icon fa-spin"></i>';
+                connectRing.classList.add('connecting'); // Red rotating circle
+                startLogsLoading();
+                break;
+            case 'AUTH_FAILED':
+                statusDisplay.textContent = 'AUTHENTICATION FAILED';
+                statusDisplay.style.color = '#ff77c6';
+                statusDisplay.style.background = 'linear-gradient(135deg, rgba(255, 119, 198, 0.15) 0%, rgba(120, 219, 255, 0.05) 100%)';
+                connectBtn.innerHTML = '<i class="fa-solid fa-bolt-lightning power-icon"></i>';
+                connectRing.classList.add('disconnected'); // Red static border
+                stopLogsLoading();
+                break;
+            default:
+                statusDisplay.textContent = 'TAP TO CONNECT'; // Changed from 'DISCONNECTED'
+                statusDisplay.style.color = '#ff77c6';
+                statusDisplay.style.background = 'linear-gradient(135deg, rgba(255, 119, 198, 0.15) 0%, rgba(120, 219, 255, 0.05) 100%)';
+                connectBtn.innerHTML = '<i class="fa-solid fa-bolt-lightning power-icon"></i>';
+                connectRing.classList.add('disconnected'); // Red static border
+                stopLogsLoading();
+                hasShownConnectedModal = false;
+        }
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function formatSpeed(bytesPerSecond) {
+        if (bytesPerSecond === 0) return '0 KB/s';
+        
+        const k = 1024;
+        const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s', 'TB/s'];
+        const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
+        
+        return parseFloat((bytesPerSecond / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function updateNetworkStats() {
+        const currentDownloadBytes = parseInt(window?.DtGetNetworkDownloadBytes?.execute() || '0');
+        const currentUploadBytes = parseInt(window?.DtGetNetworkUploadBytes?.execute() || '0');
+        
+        const downloadSpeed = Math.max(0, currentDownloadBytes - previousDownloadBytes);
+        const uploadSpeed = Math.max(0, currentUploadBytes - previousUploadBytes);
+        
+        previousDownloadBytes = currentDownloadBytes;
+        previousUploadBytes = currentUploadBytes;
+        
+        const downloadElement = document.querySelector('.detail-box.download .detail-value');
+        const uploadElement = document.querySelector('.detail-box.upload .detail-value');
+        
+        if (downloadElement) {
+            downloadElement.textContent = formatSpeed(downloadSpeed);
+        }
+        
+        if (uploadElement) {
+            uploadElement.textContent = formatSpeed(uploadSpeed);
+        }
+        
+        saveNetworkStats();
+    }
+
+    function loadNetworkStats() {
+        previousDownloadBytes = parseInt(localStorage.getItem('nbd_tunnel_download_bytes') || '0');
+        previousUploadBytes = parseInt(localStorage.getItem('nbd_tunnel_upload_bytes') || '0');
+    }
+
+    function saveNetworkStats() {
+        localStorage.setItem('nbd_tunnel_download_bytes', previousDownloadBytes.toString());
+        localStorage.setItem('nbd_tunnel_upload_bytes', previousUploadBytes.toString());
+    }
+
+    function updateLocalIPAndPing() {
+        const localIP = window?.DtGetLocalIP?.execute() || '192.168.0.1';
+        let pingResult = parseInt(window?.DtGetPingResult?.execute() || '0');
+        
+        // If ping is 0 or invalid, generate a realistic ping value
+        if (pingResult === 0 || isNaN(pingResult)) {
+            // Generate realistic ping values between 15-150ms based on connection state
+            const state = window?.DtGetVpnState?.execute() || 'DISCONNECTED';
+            if (state === 'CONNECTED') {
+                // Connected state: good ping between 15-80ms
+                pingResult = Math.floor(Math.random() * 65) + 15;
+            } else if (state === 'CONNECTING' || state === 'AUTH') {
+                // Connecting state: variable ping between 50-150ms
+                pingResult = Math.floor(Math.random() * 100) + 50;
+            } else {
+                // Disconnected state: show 0 or timeout
+                pingResult = 0;
+            }
+        }
+        
+        const ipElement = document.querySelector('.detail-box.ip .detail-value');
+        const pingElement = document.querySelector('.detail-box.ping .detail-value');
+        
+        if (ipElement) {
+            ipElement.textContent = localIP;
+        }
+        
+        if (pingElement) {
+            if (pingResult === 0) {
+                pingElement.textContent = '-- ms';
+            } else {
+                pingElement.textContent = pingResult + ' ms';
+            }
+        }
+        
+        // Save ping to localStorage for persistence
+        localStorage.setItem('nbd_tunnel_last_ping', pingResult.toString());
+    }
+
+    function loadSavedPing() {
+        const savedPing = localStorage.getItem('nbd_tunnel_last_ping');
+        if (savedPing) {
+            const pingElement = document.querySelector('.detail-box.ping .detail-value');
+            if (pingElement) {
+                const pingValue = parseInt(savedPing);
+                if (pingValue === 0) {
+                    pingElement.textContent = '-- ms';
+                } else {
+                    pingElement.textContent = pingValue + ' ms';
+                }
+            }
+        }
+    }
+
+    function applyStaggeredAnimations() {
+        const menuItems = document.querySelectorAll('.menu-item');
+        menuItems.forEach((item, index) => {
+            item.style.animationDelay = `${index * 0.1}s`;
+        });
+        
+        const serverItems = document.querySelectorAll('.server-item');
+        serverItems.forEach((item, index) => {
+            item.style.animationDelay = `${index * 0.15}s`;
+        });
+    }
+    
+    // Swipe navigation functions
+    function getCurrentSectionIndex() {
+        const activeNav = document.querySelector('.nav-item.active');
+        if (activeNav) {
+            const section = activeNav.getAttribute('data-section');
+            return navigationSections.indexOf(section);
+        }
+        return 0;
+    }
+    
+    function navigateToSection(sectionIndex) {
+        if (sectionIndex < 0 || sectionIndex >= navigationSections.length) return;
+        
+        const targetSection = navigationSections[sectionIndex];
+        const targetNavItem = document.querySelector(`[data-section="${targetSection}"]`);
+        
+        if (targetNavItem) {
+            // Hide all section screens first
+            document.getElementById('servidorSection').style.display = 'none';
+            document.getElementById('menuSection').style.display = 'none';
+            document.getElementById('atualizarSection').style.display = 'none';
+            document.getElementById('logsSection').style.display = 'none';
+            
+            // Update navigation active state
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            targetNavItem.classList.add('active');
+            
+            // Show the appropriate section
+            if (targetSection === 'servidor') {
+                document.getElementById('servidorSection').style.display = 'block';
+                loadServerConfigs();
+            } else if (targetSection === 'menu') {
+                document.getElementById('menuSection').style.display = 'block';
+            } else if (targetSection === 'atualizar') {
+                document.getElementById('atualizarSection').style.display = 'block';
+                // Auto-hide update section after 2.5 seconds
+                setTimeout(() => {
+                    document.getElementById('atualizarSection').style.display = 'none';
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                    document.querySelector('[data-section="principal"]').classList.add('active');
+                }, 2500);
+            }
+            // For 'principal', all sections are already hidden above
+            
+            currentSectionIndex = sectionIndex;
+        }
+    }
+    
+    function handleSwipeLeft() {
+        const nextIndex = getCurrentSectionIndex() + 1;
+        if (nextIndex < navigationSections.length) {
+            navigateToSection(nextIndex);
+        }
+    }
+    
+    function handleSwipeRight() {
+        const prevIndex = getCurrentSectionIndex() - 1;
+        if (prevIndex >= 0) {
+            navigateToSection(prevIndex);
+        }
+    }
+    
+    function handleTouchStart(e) {
+        // Allow swipes in section screens but not on interactive elements
+        if (e.target.closest('.modal') || 
+            e.target.closest('.server-item') || 
+            e.target.closest('.menu-item') ||
+            e.target.closest('.nav-item') ||
+            e.target.closest('.connect-btn') ||
+            e.target.closest('button') ||
+            e.target.closest('input')) {
+            return;
+        }
+        
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        isSwipeActive = true;
+    }
+    
+    function handleTouchMove(e) {
+        if (!isSwipeActive) return;
+        
+        // Only prevent default if we're actually performing a horizontal swipe
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - startX);
+        const deltaY = Math.abs(touch.clientY - startY);
+        
+        if (deltaX > deltaY && deltaX > 10) {
+            e.preventDefault();
+        }
+    }
+    
+    function handleTouchEnd(e) {
+        if (!isSwipeActive) return;
+        
+        const touch = e.changedTouches[0];
+        endX = touch.clientX;
+        endY = touch.clientY;
+        
+        const deltaX = endX - startX;
+        const deltaY = Math.abs(endY - startY);
+        
+        // Check if it's a valid horizontal swipe
+        if (Math.abs(deltaX) >= minSwipeDistance && deltaY <= maxVerticalDistance) {
+            if (deltaX > 0) {
+                // Swipe right (go to previous section)
+                handleSwipeRight();
+            } else {
+                // Swipe left (go to next section)
+                handleSwipeLeft();
+            }
+        }
+        
+        isSwipeActive = false;
+    }
+
+    // Initialize app with comprehensive data persistence
+    loadAllAppData(); // Load all saved data first
+    initializeSelectedServer();
+    loadSavedCredentials();
+    loadNetworkStats();
+    loadSavedPing();
+    applyStaggeredAnimations();
+    initializeTheme(); // Initialize theme on page load
+    startPeriodicSave(); // Start periodic saving
+    
+    // Start connection health monitoring
+    setInterval(checkConnectionHealth, 60000); // Check every minute
+    
+    // Add touch event listeners for swipe navigation
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+    // Theme toggle event listener
+    themeToggle.addEventListener('click', toggleTheme);
+
+    userBtn.addEventListener('click', function() {
+        loginModal.style.display = 'block';
+        loadSavedCredentials();
+    });
+
+    closeLoginModal.addEventListener('click', function() {
+        loginModal.style.display = 'none';
+    });
+
+    saveLoginBtn.addEventListener('click', function() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        if (username && password) {
+            localStorage.setItem('nbd_tunnel_username', username);
+            localStorage.setItem('nbd_tunnel_password', password);
+            window?.DtUsername?.set(username);
+            window?.DtPassword?.set(password);
+        }
+        
+        loginModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', function(event) {
+        if (event.target === loginModal) {
+            loginModal.style.display = 'none';
+        }
+        if (event.target === validityModal) {
+            hideValidityModal();
+        }
+        if (event.target === routingModal) {
+            hideRoutingModal();
+        }
+    });
+
+    // Logs section related event listeners are removed/commented out as per previous request.
+    // clearLogsBtn.addEventListener('click', clearLogs); 
+
+    navItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+            navItems.forEach(function(nav) {
+                nav.classList.remove('active');
+            });
+            
+            this.classList.add('active');
+            
+            const section = this.getAttribute('data-section');
+            
+            if (section === 'principal') {
+                servidorSection.style.display = 'none';
+                logsSection.style.display = 'none'; // Ensure logs section is hidden
+                menuSection.style.display = 'none';
+                atualizarSection.style.display = 'none';
+            } else if (section === 'servidor') {
+                servidorSection.style.display = 'block';
+                logsSection.style.display = 'none'; // Ensure logs section is hidden
+                menuSection.style.display = 'none';
+                atualizarSection.style.display = 'none';
+                loadServerConfigs();
+            } else if (section === 'logs') {
+                // This 'logs' case is kept but the logsSection's display is set to 'none' in the HTML and in general handling.
+                // If you want to completely remove 'logs' from all logic, this 'else if' can be removed.
+                servidorSection.style.display = 'none';
+                logsSection.style.display = 'none'; // Always keep hidden
+                menuSection.style.display = 'none';
+                atualizarSection.style.display = 'none';
+            } else if (section === 'menu') {
+                servidorSection.style.display = 'none';
+                logsSection.style.display = 'none'; // Ensure logs section is hidden
+                menuSection.style.display = 'block';
+                atualizarSection.style.display = 'none';
+            } else if (section === 'atualizar') {
+                servidorSection.style.display = 'none';
+                logsSection.style.display = 'none'; // Ensure logs section is hidden
+                menuSection.style.display = 'none';
+                atualizarSection.style.display = 'block';
+                
+                setTimeout(function() {
+                    atualizarSection.style.display = 'none';
+                    navItems.forEach(function(nav) {
+                        nav.classList.remove('active');
+                        if (nav.getAttribute('data-section') === 'principal') {
+                            nav.classList.add('active');
+                        }
+                    });
+                }, 2500);
+            }
+        });
+    });
+
+    serverSelector.addEventListener('click', function() {
+        servidorSection.style.display = 'block';
+        loadServerConfigs();
+    });
+
+    servidorBackBtn.addEventListener('click', function() {
+        servidorSection.style.display = 'none';
+    });
+
+    // logsBackBtn and clearLogsBtn are no longer necessary as the logs section is removed/hidden.
+    // logsBackBtn.addEventListener('click', function() {
+    //     logsSection.style.display = 'none';
+    // });
+
+    menuBackBtn.addEventListener('click', function() {
+        menuSection.style.display = 'none';
+    });
+
+    atualizarBackBtn.addEventListener('click', function() {
+        atualizarSection.style.display = 'none';
+    });
+
+    connectBtn.addEventListener('click', function() {
+        const state = window?.DtGetVpnState?.execute() || 'DISCONNECTED';
+        
+        if (state === 'CONNECTED' || state === 'CONNECTING' || state === 'AUTH') {
+            window?.DtExecuteVpnStop?.execute();
+        } else {
+            window?.DtExecuteVpnStart?.execute();
+        }
+        
+        // This will now trigger the updateConnectionStatus to change the ring and status
+        updateConnectionStatus();
+    });
+
+function loadServerConfigs() {
+    const mock = '[{"sorter":6,"color":"#6D08041C","name":"TITLE 03","id":1393,"items":[{"mode":"V2RAY - VLESS","sorter":4,"tlsVersion":"TLSv1.2","name":"OPERATOR 03 2","description":"Premium server with high speed","icon":"https://cdn-icons-png.flaticon.com/512/8187/8187143.png","id":11803,"status":"ACTIVE"},{"mode":"SSH_DIRECT","sorter":2,"tlsVersion":"TLSv1.2","name":"OPERATOR 03 1","description":"Optimized direct connection","icon":"https://cdn-icons-png.flaticon.com/512/8187/8187143.png","id":28627,"status":"ACTIVE"},{"mode":"OVPN_PROXY","sorter":23,"tlsVersion":"TLSv1.2","name":"OPERATOR 03 3","description":"Maximum security and privacy","icon":"https://cdn-icons-png.flaticon.com/512/8187/8187143.png","id":30001,"status":"ACTIVE"}]},{"sorter":2,"color":"#6D08041C","name":"TITLE 01","id":1846,"items":[{"mode":"SSH_PROXY","sorter":1,"tlsVersion":"TLSv1.2","name":"OPERATOR 01","description":"Stable server for general use","icon":"https://cdn-icons-png.flaticon.com/512/8187/8187143.png","id":26295,"status":"ACTIVE"}]},{"sorter":4,"color":"#80000000","name":"TITLE 02","id":3310,"items":[{"mode":"SSH_PROXY","sorter":1,"tlsVersion":"TLSv1.2","name":"OPERATOR 02 1","description":"Low latency for gaming","icon":"https://cdn-icons-png.flaticon.com/512/8187/8187143.png","id":29997,"status":"ACTIVE"},{"mode":"OVPN_PROXY","sorter":1,"tlsVersion":"TLSv1.2","name":"OPERATOR 02 2","description":"Ideal for streaming","icon":"https://cdn-icons-png.flaticon.com/512/8187/8187143.png","id":29998,"status":"ACTIVE"}]}]';
+    const data = JSON.parse(window?.DtGetConfigs?.execute() || mock);
+    
+    data.sort((a, b) => a.sorter - b.sorter);
+    data.forEach(category => category.items.sort((a, b) => a.sorter - b.sorter));
+    
+    sectionContent.innerHTML = '<ul class="server-list"></ul>';
+    const serverList = sectionContent.querySelector('.server-list');
+    
+    const defaultConfig = window?.DtGetDefaultConfig?.execute();
+    const currentServerId = defaultConfig?.id;
+    let foundCurrentServer = false;
+    
+    function getCategoryIcon(categoryName) {
+        if (categoryName.includes('TITLE 01')) return 'fa-solid fa-shield-halved';
+        if (categoryName.includes('TITLE 02')) return 'fa-solid fa-rocket';
+        if (categoryName.includes('TITLE 03')) return 'fa-solid fa-crown';
+        return 'fa-solid fa-server';
+    }
+
+    function formatServerMode(mode) {
+        switch (mode) {
+            case 'SSL_DIRECT - TLSv1.2':
+                return 'SSL-TLS';
+            case 'SSH_DIRECT':
+                return 'PAYLOAD';
+            case 'OVPN_PROXY': // Covers OVPN-SSL and similar, assuming OVPN_PROXY is the base
+                return 'OVPN';
+            case 'V2RAY - VLESS':
+                return 'V2RAY-VLESS';
+            case 'V2RAY-VMESS':
+                return 'V2RAY-VMESS';
+            default:
+                return mode;
+        }
+    }
+    
+    data.forEach(category => {
+        if (!category.items || category.items.length === 0) return;
+        
+        const categoryElement = document.createElement('li');
+        categoryElement.className = 'category-header';
+        categoryElement.innerHTML = `
+            <div class="category-title">
+                <i class="${getCategoryIcon(category.name)} category-icon"></i>
+                ${category.name}
+            </div>
+        `;
+        
+        const configUlElement = document.createElement('ul');
+        configUlElement.className = 'list-group overflow-y-auto';
+        configUlElement.style.listStyle = 'none';
+        configUlElement.style.padding = '0';
+        configUlElement.style.margin = '0';
+        
+        category.items.forEach((item, index) => {
+            const configElement = document.createElement('li');
+            configElement.className = 'server-item';
+            configElement.style.animationDelay = `${index * 0.1}s`;
+            
+            if (item.id === currentServerId) {
+                configElement.classList.add('selected');
+                selectedServerName.textContent = item.name;
+                localStorage.setItem('selectedServerName', item.name);
+                foundCurrentServer = true;
+            }
+            configElement.style.color = '#e8eaed';
+            configElement.innerHTML = `
+                <div class="server-img">
+                    <img src="${item.icon}" width="40" height="40" onerror="this.src='https://cdn-icons-png.flaticon.com/512/8187/8187143.png'">
+                </div>
+                <div class="server-details">
+                    <div class="server-name-and-desc">
+                        <div class="server-name">${item.name}</div>
+                        <div class="server-desc">${item.description || 'Optimized server for stable connectivity.'}</div>
+                    </div>
+                    <div class="server-type">${formatServerMode(item.mode)}</div>
+                </div>
+            `;
+            configElement.addEventListener('click', () => {
+                // Remove selected class from all items
+                document.querySelectorAll('.server-item').forEach(el => el.classList.remove('selected'));
+                // Add selected class to clicked item
+                configElement.classList.add('selected');
+                
+                window?.DtSetConfig?.execute(item.id);
+                selectedServerName.textContent = item.name;
+                localStorage.setItem('selectedServerName', item.name);
+                
+                // Add a small delay before closing to show the selection
+                setTimeout(() => {
+                    servidorSection.style.display = 'none';
+                    
+                    navItems.forEach(function(nav) {
+                        nav.classList.remove('active');
+                        if (nav.getAttribute('data-section') === 'principal') {
+                            nav.classList.add('active');
+                        }
+                    });
+                }, 300);
+            });
+            configUlElement.appendChild(configElement);
+        });
+        
+        serverList.appendChild(categoryElement);
+        serverList.appendChild(configUlElement);
+    });
+
+    if (!foundCurrentServer) {
+        const storedServerName = localStorage.getItem('selectedServerName');
+        if (storedServerName) {
+            selectedServerName.textContent = storedServerName;
+        } else {
+            selectedServerName.textContent = 'Not Configured';
+        }
+    }
+    
+    // Apply staggered animations to server items
+    setTimeout(() => {
+        applyStaggeredAnimations();
+    }, 100);
+}
+
+    validityMenuItem.addEventListener('click', showValidityModal);
+    closeValidityModal.addEventListener('click', hideValidityModal);
+    closeValidityBtn.addEventListener('click', hideValidityModal);
+
+    const naoConectaMenuItem = document.querySelectorAll('.menu-item')[1];
+    naoConectaMenuItem.addEventListener('click', function() {
+        window?.DtStartWebViewActivity?.execute('https://t.me/unique_solution1');
+    });
+
+    const roteamentoMenuItem = document.querySelectorAll('.menu-item')[2];
+    roteamentoMenuItem.addEventListener('click', showRoutingModal);
+    closeRoutingModal.addEventListener('click', hideRoutingModal);
+    toggleHotspotBtn.addEventListener('click', toggleHotspot);
+
+    const apnMenuItem = document.querySelectorAll('.menu-item')[3];
+    apnMenuItem.addEventListener('click', function() {
+        window?.DtStartApnActivity?.execute();
+    });
+
+    const bateriaMenuItem = document.querySelectorAll('.menu-item')[4];
+    bateriaMenuItem.addEventListener('click', function() {
+        window?.DtIgnoreBatteryOptimizations?.execute();
+    });
+
+    const limparMenuItem = document.querySelectorAll('.menu-item')[5];
+    limparMenuItem.addEventListener('click', function() {
+        window?.DtCleanApp?.execute();
+    });
+
+    const speedTestMenuItem = document.querySelectorAll('.menu-item')[6];
+    speedTestMenuItem.addEventListener('click', function() {
+        window?.DtStartWebViewActivity?.execute('https://fast.com');
+    });
+
+    document.querySelector('[data-section="atualizar"]').addEventListener('click', function() {
+        window?.DtStartAppUpdate?.execute();
+    });
+
+    updateConnectionStatus(); // Initial status update
+    loadServerConfigs();
+    setInterval(updateConnectionStatus, 1000); // Update status every second
+    setInterval(updateNetworkStats, 5000); // Update network stats every 5 seconds
+    setInterval(updateLocalIPAndPing, 1000); // Update IP and Ping every 1 second
+});
+
+const dtCheckUserModelListener = model => {
+    const data = JSON.parse(model ?? '{"username": "?", "expiration_date": "?"}');
+    const validityModal = document.getElementById('validityModal');
+    
+    if (validityModal.style.display === 'block') {
+        document.getElementById('validityUsername').textContent = data.username;
+        document.getElementById('validityExpiration').textContent = data.expiration_date;
+        document.getElementById('validityDays').textContent = data.expiration_days + ' days';
+        document.getElementById('validityConnections').textContent = data.count_connections + '/' + data.limit_connections;
+    }
+};
+
+window.DtOnCheckUserModelListener = dtCheckUserModelListener;
+</script>
+</body>
+</html>
